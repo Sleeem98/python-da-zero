@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Python da Zero</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-panel: #161922;
+    --bg-elev: #1d212c;
+    --border: #2a2f3a;
+    --text: #e4e6eb;
+    --text-dim: #9aa0ad;
+    --accent: #5dcaa5;
+    --accent-dim: #1d9e75;
+    --code-bg: #11141c;
+    --danger: #d4537e;
+    --done: #5dcaa5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 270px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  .sidebar h1 {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0 1.25rem 1rem;
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+  .progress-bar-wrap {
+    padding: 0 1.25rem 1rem;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--bg-elev);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent-dim);
+    transition: width 0.3s;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .module-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 1.25rem;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-dim);
+    border-left: 3px solid transparent;
+  }
+  .module-item:hover { background: var(--bg-elev); }
+  .module-item.active {
+    background: var(--bg-elev);
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+  .module-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-dim);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+  .module-check.done {
+    background: var(--done);
+    border-color: var(--done);
+    color: #0f1115;
+  }
+  .module-num { color: var(--text-dim); font-size: 12px; width: 18px; flex-shrink: 0; }
+  .level-divider {
+    margin: 1rem 1.25rem 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .module-item.locked {
+    cursor: not-allowed;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .module-item.locked:hover { background: none; }
+  .lock-icon { font-size: 12px; }
+  .unlock-banner {
+    background: var(--bg-elev);
+    border: 1px solid var(--accent-dim);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-top: 1rem;
+  }
+  .unlock-banner h2 {
+    margin: 0 0 0.5rem;
+    font-size: 19px;
+  }
+  .unlock-banner p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin: 0 0 1rem;
+  }
+
+  .main {
+    flex: 1;
+    padding: 2.5rem 3rem;
+    max-width: 760px;
+    overflow-y: auto;
+  }
+  .lesson-title {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+  .lesson-subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 2rem;
+  }
+  .section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--accent);
+  }
+  .section p { font-size: 15px; color: #d4d6dc; }
+  code.inline {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  pre.codeblock {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin: 0.75rem 0 1.25rem;
+  }
+  .comment { color: #6b7280; }
+  .kw { color: #d4537e; }
+  .str { color: #ef9f27; }
+  .fn { color: #378ADD; }
+  .num { color: #97C459; }
+
+  .exercise-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .exercise-box .ex-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .exercise-box p { margin: 0.3rem 0 0.75rem; font-size: 14.5px; }
+  .reveal-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .reveal-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .solution {
+    display: none;
+    margin-top: 0.75rem;
+  }
+  .solution.shown { display: block; }
+  .code-input {
+    width: 100%;
+    min-height: 110px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 0.75rem 1rem;
+    resize: vertical;
+    margin-bottom: 0.6rem;
+  }
+  .code-input:focus {
+    outline: none;
+    border-color: var(--accent-dim);
+  }
+  .ex-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .compare-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin: 1rem 0 0.4rem;
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 0.5rem;
+  }
+  .compare-grid .codeblock {
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .nav-btn:hover { border-color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .complete-btn {
+    background: var(--accent-dim);
+    border: none;
+    color: #0f1115;
+    font-weight: 600;
+  }
+  .complete-btn.done-state {
+    background: var(--bg-elev);
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <h1>Python da Zero</h1>
+    <div class="progress-bar-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 10 completate</div>
+    </div>
+    <div id="moduleList"></div>
+  </div>
+  <div class="main" id="mainContent"></div>
+</div>
+
+<script>
+const lessons = [
+{
+  title: "Introduzione a Python",
+  subtitle: "Variabili e tipi di dato",
+  level: 1,
+  sections: [
+    { h: "Cos'è Python", p: "Python è un linguaggio di programmazione facile da leggere, usato per siti web, automazione, intelligenza artificiale e molto altro. Il codice si scrive in file con estensione <code class='inline'>.py</code>." },
+    { h: "Variabili", p: "Una variabile è un contenitore con un nome che contiene un valore. In Python non serve dichiarare il tipo: basta assegnarlo.",
+      code: `<span class="comment"># creiamo alcune variabili</span>\nnome = <span class="str">"Samuel"</span>\neta = <span class="num">30</span>\naltezza = <span class="num">1.78</span>\n\n<span class="fn">print</span>(nome)\n<span class="fn">print</span>(eta)` },
+    { h: "Tipi di dato principali", p: "I tipi base sono: <code class='inline'>str</code> (testo), <code class='inline'>int</code> (numeri interi), <code class='inline'>float</code> (numeri decimali), <code class='inline'>bool</code> (Vero/Falso).",
+      code: `testo = <span class="str">"ciao"</span>      <span class="comment"># str</span>\nintero = <span class="num">42</span>         <span class="comment"># int</span>\ndecimale = <span class="num">3.14</span>     <span class="comment"># float</span>\nflag = <span class="kw">True</span>          <span class="comment"># bool</span>` }
+  ],
+  exercises: [
+    { q: "Crea una variabile chiamata <code class='inline'>citta</code> e assegnale il valore \"Locarno\", poi stampala con <code class='inline'>print()</code>.",
+      sol: `citta = <span class="str">"Locarno"</span>\n<span class="fn">print</span>(citta)` },
+    { q: "Crea due variabili numeriche <code class='inline'>a</code> e <code class='inline'>b</code> con i valori 5 e 7, poi stampa la loro somma.",
+      sol: `a = <span class="num">5</span>\nb = <span class="num">7</span>\n<span class="fn">print</span>(a + b)` }
+  ]
+},
+{
+  title: "Operatori e Input/Output",
+  subtitle: "Calcoli, print() e input()",
+  level: 1,
+  sections: [
+    { h: "Operatori aritmetici", p: "Python supporta i classici operatori matematici: <code class='inline'>+ - * /</code>, più <code class='inline'>**</code> (potenza) e <code class='inline'>%</code> (resto della divisione).",
+      code: `<span class="fn">print</span>(<span class="num">10</span> + <span class="num">3</span>)   <span class="comment"># 13</span>\n<span class="fn">print</span>(<span class="num">10</span> ** <span class="num">2</span>)  <span class="comment"># 100</span>\n<span class="fn">print</span>(<span class="num">10</span> % <span class="num">3</span>)   <span class="comment"># 1 (resto)</span>` },
+    { h: "Leggere input dall'utente", p: "La funzione <code class='inline'>input()</code> chiede un valore all'utente. Il risultato è sempre una stringa, quindi spesso va convertito con <code class='inline'>int()</code> o <code class='inline'>float()</code>.",
+      code: `nome = <span class="fn">input</span>(<span class="str">"Come ti chiami? "</span>)\n<span class="fn">print</span>(<span class="str">"Ciao "</span> + nome)\n\neta = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Quanti anni hai? "</span>))\n<span class="fn">print</span>(eta + <span class="num">1</span>)` },
+    { h: "f-string per output formattato", p: "Le f-string permettono di inserire variabili direttamente dentro una stringa, anteponendo <code class='inline'>f</code> alle virgolette.",
+      code: `nome = <span class="str">"Marco"</span>\neta = <span class="num">25</span>\n<span class="fn">print</span>(f<span class="str">"{nome} ha {eta} anni"</span>)` }
+  ],
+  exercises: [
+    { q: "Chiedi all'utente due numeri con <code class='inline'>input()</code>, convertili in interi e stampa il loro prodotto.",
+      sol: `a = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Primo numero: "</span>))\nb = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Secondo numero: "</span>))\n<span class="fn">print</span>(a * b)` },
+    { q: "Usa una f-string per stampare \"Il risultato di 7 % 2 è 1\" calcolando davvero il resto.",
+      sol: `a = <span class="num">7</span>\nb = <span class="num">2</span>\n<span class="fn">print</span>(f<span class="str">"Il risultato di {a} % {b} è {a % b}"</span>)` }
+  ]
+},
+{
+  title: "Strutture di controllo",
+  subtitle: "if, elif, else",
+  level: 1,
+  sections: [
+    { h: "Il blocco if", p: "Permette di eseguire codice solo se una condizione è vera. In Python l'indentazione (gli spazi iniziali) è obbligatoria e definisce i blocchi di codice.",
+      code: `eta = <span class="num">20</span>\n<span class="kw">if</span> eta >= <span class="num">18</span>:\n    <span class="fn">print</span>(<span class="str">"Sei maggiorenne"</span>)` },
+    { h: "elif ed else", p: "<code class='inline'>elif</code> aggiunge condizioni alternative, <code class='inline'>else</code> gestisce tutti i casi rimanenti.",
+      code: `voto = <span class="num">75</span>\n<span class="kw">if</span> voto >= <span class="num">90</span>:\n    <span class="fn">print</span>(<span class="str">"Eccellente"</span>)\n<span class="kw">elif</span> voto >= <span class="num">60</span>:\n    <span class="fn">print</span>(<span class="str">"Sufficiente"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"Insufficiente"</span>)` },
+    { h: "Operatori logici", p: "<code class='inline'>and</code>, <code class='inline'>or</code> e <code class='inline'>not</code> combinano più condizioni.",
+      code: `eta = <span class="num">25</span>\nha_patente = <span class="kw">True</span>\n\n<span class="kw">if</span> eta >= <span class="num">18</span> <span class="kw">and</span> ha_patente:\n    <span class="fn">print</span>(<span class="str">"Puoi guidare"</span>)` }
+  ],
+  exercises: [
+    { q: "Scrivi un programma che chiede un numero e dice se è positivo, negativo o zero.",
+      sol: `n = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Numero: "</span>))\n<span class="kw">if</span> n > <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"Positivo"</span>)\n<span class="kw">elif</span> n < <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"Negativo"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"Zero"</span>)` },
+    { q: "Chiedi due numeri e stampa quale dei due è più grande (oppure se sono uguali).",
+      sol: `a = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Primo: "</span>))\nb = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Secondo: "</span>))\n<span class="kw">if</span> a > b:\n    <span class="fn">print</span>(<span class="str">"Il primo è più grande"</span>)\n<span class="kw">elif</span> b > a:\n    <span class="fn">print</span>(<span class="str">"Il secondo è più grande"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"Sono uguali"</span>)` }
+  ]
+},
+{
+  title: "Cicli",
+  subtitle: "for, while, range()",
+  level: 1,
+  sections: [
+    { h: "Il ciclo for con range()", p: "<code class='inline'>range(n)</code> genera numeri da 0 a n-1. È il modo più comune per ripetere un'azione un numero fisso di volte.",
+      code: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    <span class="fn">print</span>(i)\n<span class="comment"># stampa 0 1 2 3 4</span>` },
+    { h: "Il ciclo while", p: "Ripete un blocco finché una condizione resta vera. Attenzione a non creare cicli infiniti: la condizione deve poter diventare falsa.",
+      code: `contatore = <span class="num">0</span>\n<span class="kw">while</span> contatore < <span class="num">3</span>:\n    <span class="fn">print</span>(<span class="str">"Ciclo numero"</span>, contatore)\n    contatore = contatore + <span class="num">1</span>` },
+    { h: "break e continue", p: "<code class='inline'>break</code> interrompe il ciclo subito, <code class='inline'>continue</code> salta alla prossima iterazione.",
+      code: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">10</span>):\n    <span class="kw">if</span> i == <span class="num">5</span>:\n        <span class="kw">break</span>\n    <span class="fn">print</span>(i)` }
+  ],
+  exercises: [
+    { q: "Usa un ciclo <code class='inline'>for</code> per stampare i numeri da 1 a 10.",
+      sol: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">11</span>):\n    <span class="fn">print</span>(i)` },
+    { q: "Usa un ciclo <code class='inline'>while</code> per stampare \"Ancora un po'\" finché un contatore che parte da 0 non raggiunge 5.",
+      sol: `c = <span class="num">0</span>\n<span class="kw">while</span> c < <span class="num">5</span>:\n    <span class="fn">print</span>(<span class="str">"Ancora un po'"</span>)\n    c += <span class="num">1</span>` }
+  ]
+},
+{
+  title: "Liste e tuple",
+  subtitle: "Collezioni ordinate di valori",
+  level: 1,
+  sections: [
+    { h: "Creare una lista", p: "Una lista è una sequenza ordinata e modificabile di valori, racchiusa tra parentesi quadre.",
+      code: `frutti = [<span class="str">"mela"</span>, <span class="str">"banana"</span>, <span class="str">"kiwi"</span>]\n<span class="fn">print</span>(frutti[<span class="num">0</span>])   <span class="comment"># mela</span>\n<span class="fn">print</span>(frutti[-<span class="num">1</span>])  <span class="comment"># kiwi (ultimo elemento)</span>` },
+    { h: "Metodi comuni delle liste", p: "<code class='inline'>append()</code> aggiunge un elemento, <code class='inline'>remove()</code> lo rimuove, <code class='inline'>len()</code> conta gli elementi.",
+      code: `numeri = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]\nnumeri.append(<span class="num">4</span>)\nnumeri.remove(<span class="num">2</span>)\n<span class="fn">print</span>(numeri)       <span class="comment"># [1, 3, 4]</span>\n<span class="fn">print</span>(<span class="fn">len</span>(numeri))  <span class="comment"># 3</span>` },
+    { h: "Le tuple", p: "Una tupla è simile a una lista ma non modificabile, scritta con parentesi rotonde. Si usa per dati che non devono cambiare.",
+      code: `coordinate = (<span class="num">45.8</span>, <span class="num">8.9</span>)\n<span class="fn">print</span>(coordinate[<span class="num">0</span>])` }
+  ],
+  exercises: [
+    { q: "Crea una lista con i nomi di 4 città svizzere e stampa la seconda della lista.",
+      sol: `citta = [<span class="str">"Locarno"</span>, <span class="str">"Lugano"</span>, <span class="str">"Bellinzona"</span>, <span class="str">"Zurigo"</span>]\n<span class="fn">print</span>(citta[<span class="num">1</span>])` },
+    { q: "Crea una lista vuota, aggiungi tre numeri con <code class='inline'>append()</code> e stampa la somma usando <code class='inline'>sum()</code>.",
+      sol: `numeri = []\nnumeri.append(<span class="num">10</span>)\nnumeri.append(<span class="num">20</span>)\nnumeri.append(<span class="num">30</span>)\n<span class="fn">print</span>(<span class="fn">sum</span>(numeri))` }
+  ]
+},
+{
+  title: "Dizionari",
+  subtitle: "Coppie chiave-valore",
+  level: 1,
+  sections: [
+    { h: "Cosa è un dizionario", p: "Un dizionario associa delle chiavi a dei valori. Si scrive tra parentesi graffe, con <code class='inline'>:</code> tra chiave e valore.",
+      code: `persona = {\n    <span class="str">"nome"</span>: <span class="str">"Samuel"</span>,\n    <span class="str">"eta"</span>: <span class="num">30</span>,\n    <span class="str">"citta"</span>: <span class="str">"Locarno"</span>\n}\n<span class="fn">print</span>(persona[<span class="str">"nome"</span>])` },
+    { h: "Modificare e aggiungere valori", p: "Si accede e si modifica un valore tramite la sua chiave, come per un indice di lista.",
+      code: `persona[<span class="str">"eta"</span>] = <span class="num">31</span>\npersona[<span class="str">"lavoro"</span>] = <span class="str">"sviluppatore"</span>\n<span class="fn">print</span>(persona)` },
+    { h: "Scorrere un dizionario", p: "Con <code class='inline'>.items()</code> si possono ottenere sia le chiavi che i valori in un ciclo.",
+      code: `<span class="kw">for</span> chiave, valore <span class="kw">in</span> persona.items():\n    <span class="fn">print</span>(chiave, <span class="str">"->"</span>, valore)` }
+  ],
+  exercises: [
+    { q: "Crea un dizionario per un libro con chiavi <code class='inline'>titolo</code> e <code class='inline'>autore</code>, poi stampa l'autore.",
+      sol: `libro = {<span class="str">"titolo"</span>: <span class="str">"Dune"</span>, <span class="str">"autore"</span>: <span class="str">"Frank Herbert"</span>}\n<span class="fn">print</span>(libro[<span class="str">"autore"</span>])` },
+    { q: "Usa <code class='inline'>.items()</code> per stampare tutte le chiavi e i valori del dizionario <code class='inline'>libro</code> sopra.",
+      sol: `<span class="kw">for</span> chiave, valore <span class="kw">in</span> libro.items():\n    <span class="fn">print</span>(chiave, <span class="str">":"</span>, valore)` }
+  ]
+},
+{
+  title: "Funzioni",
+  subtitle: "Definizione, parametri, return",
+  level: 1,
+  sections: [
+    { h: "Definire una funzione", p: "Una funzione è un blocco di codice riutilizzabile. Si definisce con <code class='inline'>def</code> e si chiama scrivendo il suo nome seguito da parentesi.",
+      code: `<span class="kw">def</span> <span class="fn">saluta</span>():\n    <span class="fn">print</span>(<span class="str">"Ciao!"</span>)\n\n<span class="fn">saluta</span>()` },
+    { h: "Parametri", p: "Le funzioni possono ricevere dei valori in ingresso, chiamati parametri.",
+      code: `<span class="kw">def</span> <span class="fn">saluta</span>(nome):\n    <span class="fn">print</span>(f<span class="str">"Ciao {nome}!"</span>)\n\n<span class="fn">saluta</span>(<span class="str">"Samuel"</span>)` },
+    { h: "return", p: "<code class='inline'>return</code> fa restituire un valore alla funzione, che si può poi usare o salvare in una variabile.",
+      code: `<span class="kw">def</span> <span class="fn">somma</span>(a, b):\n    <span class="kw">return</span> a + b\n\nrisultato = <span class="fn">somma</span>(<span class="num">3</span>, <span class="num">4</span>)\n<span class="fn">print</span>(risultato)  <span class="comment"># 7</span>` }
+  ],
+  exercises: [
+    { q: "Scrivi una funzione <code class='inline'>quadrato(n)</code> che restituisce il quadrato di un numero.",
+      sol: `<span class="kw">def</span> <span class="fn">quadrato</span>(n):\n    <span class="kw">return</span> n ** <span class="num">2</span>\n\n<span class="fn">print</span>(<span class="fn">quadrato</span>(<span class="num">5</span>))  <span class="comment"># 25</span>` },
+    { q: "Scrivi una funzione <code class='inline'>e_pari(n)</code> che restituisce <code class='inline'>True</code> se il numero è pari, <code class='inline'>False</code> altrimenti.",
+      sol: `<span class="kw">def</span> <span class="fn">e_pari</span>(n):\n    <span class="kw">return</span> n % <span class="num">2</span> == <span class="num">0</span>\n\n<span class="fn">print</span>(<span class="fn">e_pari</span>(<span class="num">4</span>))  <span class="comment"># True</span>` }
+  ]
+},
+{
+  title: "Stringhe avanzate",
+  subtitle: "Slicing, metodi, f-string",
+  level: 1,
+  sections: [
+    { h: "Slicing", p: "Si può estrarre una porzione di stringa con la sintassi <code class='inline'>[inizio:fine]</code>.",
+      code: `testo = <span class="str">"Programmazione"</span>\n<span class="fn">print</span>(testo[<span class="num">0</span>:<span class="num">6</span>])   <span class="comment"># Progra</span>\n<span class="fn">print</span>(testo[-<span class="num">5</span>:])   <span class="comment"># azione</span>` },
+    { h: "Metodi utili delle stringhe", p: "<code class='inline'>.upper()</code>, <code class='inline'>.lower()</code>, <code class='inline'>.strip()</code>, <code class='inline'>.replace()</code> e <code class='inline'>.split()</code> sono tra i metodi più usati.",
+      code: `frase = <span class="str">"  Ciao Mondo  "</span>\n<span class="fn">print</span>(frase.strip())          <span class="comment"># "Ciao Mondo"</span>\n<span class="fn">print</span>(frase.upper())          <span class="comment"># "  CIAO MONDO  "</span>\n<span class="fn">print</span>(frase.strip().split(<span class="str">" "</span>))  <span class="comment"># ['Ciao', 'Mondo']</span>` },
+    { h: "f-string avanzate", p: "Dentro le f-string si possono usare anche espressioni e formattazioni numeriche.",
+      code: `pi = <span class="num">3.14159</span>\n<span class="fn">print</span>(f<span class="str">"Pi vale {pi:.2f}"</span>)  <span class="comment"># Pi vale 3.14</span>` }
+  ],
+  exercises: [
+    { q: "Data la stringa \"Locarno, Ticino\", usa lo slicing per estrarre solo \"Locarno\".",
+      sol: `luogo = <span class="str">"Locarno, Ticino"</span>\n<span class="fn">print</span>(luogo[:<span class="num">7</span>])` },
+    { q: "Chiedi all'utente una frase e stampala tutta in maiuscolo usando <code class='inline'>.upper()</code>.",
+      sol: `frase = <span class="fn">input</span>(<span class="str">"Scrivi una frase: "</span>)\n<span class="fn">print</span>(frase.upper())` }
+  ]
+},
+{
+  title: "Gestione degli errori",
+  subtitle: "try / except",
+  level: 1,
+  sections: [
+    { h: "Perché serve la gestione errori", p: "Se il codice incontra un errore (ad esempio una divisione per zero, o un input non numerico), il programma si interrompe. <code class='inline'>try/except</code> permette di gestire l'errore senza far crashare tutto." },
+    { h: "Sintassi base", p: "Si mette il codice rischioso dentro <code class='inline'>try</code>, e cosa fare in caso di errore dentro <code class='inline'>except</code>.",
+      code: `<span class="kw">try</span>:\n    numero = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Inserisci un numero: "</span>))\n    <span class="fn">print</span>(<span class="num">10</span> / numero)\n<span class="kw">except</span> ValueError:\n    <span class="fn">print</span>(<span class="str">"Non è un numero valido"</span>)\n<span class="kw">except</span> ZeroDivisionError:\n    <span class="fn">print</span>(<span class="str">"Non si può dividere per zero"</span>)` },
+    { h: "except generico", p: "Si può anche catturare qualsiasi errore con un <code class='inline'>except</code> senza specificare il tipo, utile come rete di sicurezza generale.",
+      code: `<span class="kw">try</span>:\n    risultato = <span class="num">10</span> / <span class="num">0</span>\n<span class="kw">except</span> <span class="kw">Exception</span> <span class="kw">as</span> errore:\n    <span class="fn">print</span>(<span class="str">"Qualcosa è andato storto:"</span>, errore)` }
+  ],
+  exercises: [
+    { q: "Scrivi un blocco try/except che chiede un numero e gestisce il caso in cui l'utente scriva del testo invece di un numero.",
+      sol: `<span class="kw">try</span>:\n    n = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Numero: "</span>))\n    <span class="fn">print</span>(<span class="str">"Hai inserito"</span>, n)\n<span class="kw">except</span> ValueError:\n    <span class="fn">print</span>(<span class="str">"Devi inserire un numero!"</span>)` },
+    { q: "Scrivi una funzione che divide due numeri e gestisce l'errore di divisione per zero restituendo <code class='inline'>None</code> in quel caso.",
+      sol: `<span class="kw">def</span> <span class="fn">divide</span>(a, b):\n    <span class="kw">try</span>:\n        <span class="kw">return</span> a / b\n    <span class="kw">except</span> ZeroDivisionError:\n        <span class="kw">return</span> <span class="kw">None</span>` }
+  ]
+},
+{
+  title: "Mini progetto: Quiz interattivo",
+  subtitle: "Mettiamo tutto insieme",
+  level: 1,
+  sections: [
+    { h: "L'obiettivo", p: "Costruiamo un piccolo gioco a quiz da terminale che usa variabili, liste, dizionari, cicli, funzioni e gestione errori — tutto quello visto finora." },
+    { h: "Struttura del progetto", p: "Conviene organizzare le domande in una lista di dizionari, poi scrivere una funzione che fa una domanda e controlla la risposta.",
+      code: `domande = [\n    {<span class="str">"domanda"</span>: <span class="str">"Quanto fa 2 + 2?"</span>, <span class="str">"risposta"</span>: <span class="str">"4"</span>},\n    {<span class="str">"domanda"</span>: <span class="str">"Capitale della Svizzera?"</span>, <span class="str">"risposta"</span>: <span class="str">"berna"</span>}\n]\n\n<span class="kw">def</span> <span class="fn">fai_domanda</span>(d):\n    risposta = <span class="fn">input</span>(d[<span class="str">"domanda"</span>] + <span class="str">" "</span>).lower().strip()\n    <span class="kw">return</span> risposta == d[<span class="str">"risposta"</span>]` },
+    { h: "Il ciclo principale", p: "Scorriamo tutte le domande, teniamo un punteggio e lo mostriamo alla fine.",
+      code: `punteggio = <span class="num">0</span>\n<span class="kw">for</span> d <span class="kw">in</span> domande:\n    <span class="kw">if</span> <span class="fn">fai_domanda</span>(d):\n        <span class="fn">print</span>(<span class="str">"Corretto!"</span>)\n        punteggio += <span class="num">1</span>\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Sbagliato."</span>)\n\n<span class="fn">print</span>(f<span class="str">"Punteggio finale: {punteggio}/{len(domande)}"</span>)` }
+  ],
+  exercises: [
+    { q: "Aggiungi al quiz una terza domanda a tua scelta nel dizionario <code class='inline'>domande</code>.",
+      sol: `domande.append({\n    <span class="str">"domanda"</span>: <span class="str">"Linguaggio usato in Godot?"</span>,\n    <span class="str">"risposta"</span>: <span class="str">"gdscript"</span>\n})` },
+    { q: "Modifica la funzione <code class='inline'>fai_domanda</code> per gestire con <code class='inline'>try/except</code> il caso in cui l'utente non scriva nulla e premi solo invio.",
+      sol: `<span class="kw">def</span> <span class="fn">fai_domanda</span>(d):\n    <span class="kw">try</span>:\n        risposta = <span class="fn">input</span>(d[<span class="str">"domanda"</span>] + <span class="str">" "</span>).lower().strip()\n        <span class="kw">if</span> risposta == <span class="str">""</span>:\n            <span class="kw">raise</span> ValueError\n        <span class="kw">return</span> risposta == d[<span class="str">"risposta"</span>]\n    <span class="kw">except</span> ValueError:\n        <span class="fn">print</span>(<span class="str">"Risposta vuota, considerata sbagliata."</span>)\n        <span class="kw">return</span> <span class="kw">False</span>` }
+  ]
+},
+{
+  title: "List comprehension",
+  subtitle: "Liste in una riga",
+  level: 2,
+  sections: [
+    { h: "Cos'è una list comprehension", p: "È un modo compatto per creare una lista applicando un'operazione a ogni elemento di un'altra sequenza. In game dev è comodissimo per generare liste di nemici, posizioni o oggetti.",
+      code: `<span class="comment"># modo classico</span>\nquadrati = []\n<span class="kw">for</span> n <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    quadrati.append(n ** <span class="num">2</span>)\n\n<span class="comment"># con list comprehension</span>\nquadrati = [n ** <span class="num">2</span> <span class="kw">for</span> n <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>)]` },
+    { h: "Con condizione", p: "Si può filtrare aggiungendo un <code class='inline'>if</code> alla fine, ad esempio per selezionare solo certi nemici da una lista.",
+      code: `vite_nemici = [<span class="num">0</span>, <span class="num">5</span>, <span class="num">12</span>, <span class="num">0</span>, <span class="num">3</span>]\nvivi = [v <span class="kw">for</span> v <span class="kw">in</span> vite_nemici <span class="kw">if</span> v > <span class="num">0</span>]\n<span class="fn">print</span>(vivi)  <span class="comment"># [5, 12, 3]</span>` },
+    { h: "Esempio pratico: spawn di nemici", p: "Si può generare rapidamente una lista di posizioni di spawn, una cosa che farai spesso anche in GDScript.",
+      code: `posizioni_spawn = [(x * <span class="num">100</span>, <span class="num">0</span>) <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>)]\n<span class="fn">print</span>(posizioni_spawn)\n<span class="comment"># [(0,0), (100,0), (200,0), (300,0), (400,0)]</span>` }
+  ],
+  exercises: [
+    { q: "Usa una list comprehension per creare una lista con i numeri da 1 a 10 moltiplicati per 10.",
+      sol: `multipli = [n * <span class="num">10</span> <span class="kw">for</span> n <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">11</span>)]\n<span class="fn">print</span>(multipli)` },
+    { q: "Data la lista <code class='inline'>vite = [0, 3, 0, 7, 2, 0]</code>, crea con una list comprehension una nuova lista con solo i nemici ancora vivi (vita > 0).",
+      sol: `vite = [<span class="num">0</span>, <span class="num">3</span>, <span class="num">0</span>, <span class="num">7</span>, <span class="num">2</span>, <span class="num">0</span>]\nvivi = [v <span class="kw">for</span> v <span class="kw">in</span> vite <span class="kw">if</span> v > <span class="num">0</span>]\n<span class="fn">print</span>(vivi)` }
+  ]
+},
+{
+  title: "Moduli e import",
+  subtitle: "random, math e librerie standard",
+  level: 2,
+  sections: [
+    { h: "Importare un modulo", p: "Python ha moduli pronti all'uso. Si importano con <code class='inline'>import</code> all'inizio del file.",
+      code: `<span class="kw">import</span> random\n<span class="kw">import</span> math\n\n<span class="fn">print</span>(random.randint(<span class="num">1</span>, <span class="num">6</span>))  <span class="comment"># lancio di un dado</span>` },
+    { h: "random per il game design", p: "<code class='inline'>random.choice()</code> sceglie un elemento a caso da una lista, utile per drop casuali o decisioni dei nemici.",
+      code: `drop_possibili = [<span class="str">"spada"</span>, <span class="str">"scudo"</span>, <span class="str">"pozione"</span>, <span class="str">"niente"</span>]\noggetto = random.choice(drop_possibili)\n<span class="fn">print</span>(f<span class="str">"Hai trovato: {oggetto}"</span>)` },
+    { h: "math per distanze e angoli", p: "<code class='inline'>math.sqrt()</code> e <code class='inline'>math.hypot()</code> servono per calcolare distanze tra due punti — lo stesso tipo di calcolo che farai con <code class='inline'>Vector2</code> in Godot.",
+      code: `x1, y1 = <span class="num">0</span>, <span class="num">0</span>\nx2, y2 = <span class="num">3</span>, <span class="num">4</span>\ndistanza = math.hypot(x2 - x1, y2 - y1)\n<span class="fn">print</span>(distanza)  <span class="comment"># 5.0</span>` }
+  ],
+  exercises: [
+    { q: "Importa <code class='inline'>random</code> e simula il lancio di due dadi a 6 facce, stampando la somma dei due risultati.",
+      sol: `<span class="kw">import</span> random\n\ndado1 = random.randint(<span class="num">1</span>, <span class="num">6</span>)\ndado2 = random.randint(<span class="num">1</span>, <span class="num">6</span>)\n<span class="fn">print</span>(dado1 + dado2)` },
+    { q: "Usa <code class='inline'>math.hypot()</code> per calcolare la distanza tra il giocatore in (2, 3) e un nemico in (7, 9).",
+      sol: `<span class="kw">import</span> math\n\ndistanza = math.hypot(<span class="num">7</span> - <span class="num">2</span>, <span class="num">9</span> - <span class="num">3</span>)\n<span class="fn">print</span>(distanza)` }
+  ]
+},
+{
+  title: "Programmazione orientata agli oggetti",
+  subtitle: "Classi e oggetti di base",
+  level: 2,
+  sections: [
+    { h: "Cos'è una classe", p: "Una classe è un modello per creare oggetti con dati (attributi) e comportamenti (metodi). È lo stesso concetto dietro ogni script attaccato a un Node in Godot.",
+      code: `<span class="kw">class</span> Personaggio:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, vita):\n        self.nome = nome\n        self.vita = vita\n\neroe = Personaggio(<span class="str">"Aldo"</span>, <span class="num">100</span>)\n<span class="fn">print</span>(eroe.nome, eroe.vita)` },
+    { h: "Il metodo __init__", p: "<code class='inline'>__init__</code> è il costruttore: viene eseguito automaticamente quando crei un nuovo oggetto, e serve a impostare i valori iniziali (equivalente concettuale di <code class='inline'>_ready()</code> in Godot)." },
+    { h: "Aggiungere metodi", p: "I metodi sono funzioni dentro la classe che agiscono sui dati dell'oggetto stesso (<code class='inline'>self</code>).",
+      code: `<span class="kw">class</span> Personaggio:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, vita):\n        self.nome = nome\n        self.vita = vita\n\n    <span class="kw">def</span> <span class="fn">subisci_danno</span>(self, danno):\n        self.vita -= danno\n        <span class="fn">print</span>(f<span class="str">"{self.nome} ha {self.vita} vita rimasta"</span>)\n\neroe = Personaggio(<span class="str">"Aldo"</span>, <span class="num">100</span>)\neroe.subisci_danno(<span class="num">30</span>)` }
+  ],
+  exercises: [
+    { q: "Crea una classe <code class='inline'>Arma</code> con attributi <code class='inline'>nome</code> e <code class='inline'>danno</code>, poi crea un'istanza e stampa entrambi gli attributi.",
+      sol: `<span class="kw">class</span> Arma:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, danno):\n        self.nome = nome\n        self.danno = danno\n\nspada = Arma(<span class="str">"Spada"</span>, <span class="num">15</span>)\n<span class="fn">print</span>(spada.nome, spada.danno)` },
+    { q: "Alla classe <code class='inline'>Personaggio</code> vista sopra, aggiungi un metodo <code class='inline'>e_vivo(self)</code> che restituisce <code class='inline'>True</code> se la vita è maggiore di 0.",
+      sol: `<span class="kw">class</span> Personaggio:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, vita):\n        self.nome = nome\n        self.vita = vita\n\n    <span class="kw">def</span> <span class="fn">e_vivo</span>(self):\n        <span class="kw">return</span> self.vita > <span class="num">0</span>` }
+  ]
+},
+{
+  title: "Eredità tra classi",
+  subtitle: "Classe base e sottoclassi",
+  level: 2,
+  sections: [
+    { h: "Perché l'eredità", p: "L'eredità permette di creare una classe base con comportamenti comuni, e poi sottoclassi più specifiche che li estendono. È esattamente come si strutturano le scene in Godot (es. un Nemico base e varianti specifiche)." },
+    { h: "Sintassi base", p: "Una sottoclasse si crea scrivendo il nome della classe base tra parentesi.",
+      code: `<span class="kw">class</span> Nemico:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, vita):\n        self.vita = vita\n\n    <span class="kw">def</span> <span class="fn">attacca</span>(self):\n        <span class="fn">print</span>(<span class="str">"Attacco generico"</span>)\n\n<span class="kw">class</span> Zombie(Nemico):\n    <span class="kw">def</span> <span class="fn">attacca</span>(self):\n        <span class="fn">print</span>(<span class="str">"Il Zombie morde!"</span>)\n\nz = Zombie(<span class="num">50</span>)\nz.attacca()  <span class="comment"># Il Zombie morde!</span>` },
+    { h: "super() per riusare il genitore", p: "<code class='inline'>super().__init__()</code> permette alla sottoclasse di richiamare il costruttore della classe base, evitando di ripetere codice.",
+      code: `<span class="kw">class</span> Zombie(Nemico):\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, vita, velocita):\n        super().__init__(vita)\n        self.velocita = velocita` }
+  ],
+  exercises: [
+    { q: "Crea una classe base <code class='inline'>Nemico</code> con attributo <code class='inline'>vita</code>, poi una sottoclasse <code class='inline'>Goblin</code> che aggiunge un metodo <code class='inline'>attacca(self)</code> che stampa \"Il Goblin colpisce con il bastone!\".",
+      sol: `<span class="kw">class</span> Nemico:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, vita):\n        self.vita = vita\n\n<span class="kw">class</span> Goblin(Nemico):\n    <span class="kw">def</span> <span class="fn">attacca</span>(self):\n        <span class="fn">print</span>(<span class="str">"Il Goblin colpisce con il bastone!"</span>)` },
+    { q: "Usando <code class='inline'>super().__init__()</code>, crea una sottoclasse <code class='inline'>Boss(Nemico)</code> che aggiunge un attributo extra <code class='inline'>nome_speciale</code>.",
+      sol: `<span class="kw">class</span> Boss(Nemico):\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, vita, nome_speciale):\n        super().__init__(vita)\n        self.nome_speciale = nome_speciale` }
+  ]
+},
+{
+  title: "Mini progetto 2: Simulatore di combattimento",
+  subtitle: "OOP + random insieme",
+  level: 2,
+  sections: [
+    { h: "L'obiettivo", p: "Costruiamo un piccolo sistema di combattimento testuale con classi per Personaggio e Nemico, attacchi con danno casuale e un ciclo di battaglia — un assaggio di come penserai strutturando la logica di gioco in GDScript." },
+    { h: "Le classi", p: "Definiamo una classe base con vita e attacco, da cui ereditano sia il giocatore che i nemici.",
+      code: `<span class="kw">import</span> random\n\n<span class="kw">class</span> Combattente:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, vita):\n        self.nome = nome\n        self.vita = vita\n\n    <span class="kw">def</span> <span class="fn">e_vivo</span>(self):\n        <span class="kw">return</span> self.vita > <span class="num">0</span>\n\n    <span class="kw">def</span> <span class="fn">attacca</span>(self, altro):\n        danno = random.randint(<span class="num">5</span>, <span class="num">15</span>)\n        altro.vita -= danno\n        <span class="fn">print</span>(f<span class="str">"{self.nome} infligge {danno} danni a {altro.nome}"</span>)` },
+    { h: "Il ciclo di battaglia", p: "Usiamo un <code class='inline'>while</code> che continua finché entrambi i combattenti sono vivi, alternando i turni.",
+      code: `eroe = Combattente(<span class="str">"Aldo"</span>, <span class="num">50</span>)\nnemico = Combattente(<span class="str">"Goblin"</span>, <span class="num">40</span>)\n\n<span class="kw">while</span> eroe.e_vivo() <span class="kw">and</span> nemico.e_vivo():\n    eroe.attacca(nemico)\n    <span class="kw">if</span> nemico.e_vivo():\n        nemico.attacca(eroe)\n\nvincitore = eroe.nome <span class="kw">if</span> eroe.e_vivo() <span class="kw">else</span> nemico.nome\n<span class="fn">print</span>(f<span class="str">"Vince {vincitore}!"</span>)` }
+  ],
+  exercises: [
+    { q: "Aggiungi alla classe <code class='inline'>Combattente</code> un metodo <code class='inline'>mostra_stato(self)</code> che stampa nome e vita attuale.",
+      sol: `<span class="kw">def</span> <span class="fn">mostra_stato</span>(self):\n    <span class="fn">print</span>(f<span class="str">"{self.nome}: {self.vita} HP"</span>)` },
+    { q: "Crea una sottoclasse <code class='inline'>Boss(Combattente)</code> che fa danni più alti (random tra 10 e 25 invece di 5-15) sovrascrivendo il metodo <code class='inline'>attacca</code>.",
+      sol: `<span class="kw">class</span> Boss(Combattente):\n    <span class="kw">def</span> <span class="fn">attacca</span>(self, altro):\n        danno = random.randint(<span class="num">10</span>, <span class="num">25</span>)\n        altro.vita -= danno\n        <span class="fn">print</span>(f<span class="str">"{self.nome} colpisce duramente: {danno} danni a {altro.nome}"</span>)` }
+  ]
+},
+{
+  title: "Architettura a entità",
+  subtitle: "Una classe base condivisa",
+  level: 3,
+  sections: [
+    { h: "Il pattern Entità", p: "In Godot, ogni Node condivide un'interfaccia comune (posizione, nome, metodi base). In Python possiamo imitare questo pattern con una classe <code class='inline'>Entita</code> da cui derivano giocatore, nemici e oggetti interattivi.",
+      code: `<span class="kw">class</span> Entita:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, x=<span class="num">0</span>, y=<span class="num">0</span>):\n        self.nome = nome\n        self.x = x\n        self.y = y\n\n    <span class="kw">def</span> <span class="fn">sposta</span>(self, dx, dy):\n        self.x += dx\n        self.y += dy\n        <span class="fn">print</span>(f<span class="str">"{self.nome} si muove a ({self.x}, {self.y})"</span>)` },
+    { h: "Specializzare con eredità", p: "Ogni tipo di entità nel mondo di gioco eredita i comportamenti base e aggiunge i propri.",
+      code: `<span class="kw">class</span> Giocatore(Entita):\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome):\n        super().__init__(nome)\n        self.inventario = []\n\n<span class="kw">class</span> OggettoInteragibile(Entita):\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, x, y):\n        super().__init__(nome, x, y)\n        self.raccolto = <span class="kw">False</span>` },
+    { h: "Gestire una lista di entità", p: "Tenere tutte le entità del mondo in una lista permette di aggiornarle tutte in un ciclo, come farebbe il motore di Godot con i suoi nodi a ogni frame.",
+      code: `entita_mondo = [Giocatore(<span class="str">"Aldo"</span>), OggettoInteragibile(<span class="str">"Chiave"</span>, <span class="num">3</span>, <span class="num">2</span>)]\n\n<span class="kw">for</span> e <span class="kw">in</span> entita_mondo:\n    <span class="fn">print</span>(e.nome, e.x, e.y)` }
+  ],
+  exercises: [
+    { q: "Crea una classe <code class='inline'>Entita</code> con <code class='inline'>nome</code>, <code class='inline'>x</code>, <code class='inline'>y</code>, poi una sottoclasse <code class='inline'>Nemico</code> che aggiunge un attributo <code class='inline'>vita</code>.",
+      sol: `<span class="kw">class</span> Entita:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, x=<span class="num">0</span>, y=<span class="num">0</span>):\n        self.nome = nome\n        self.x = x\n        self.y = y\n\n<span class="kw">class</span> Nemico(Entita):\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, x, y, vita):\n        super().__init__(nome, x, y)\n        self.vita = vita` },
+    { q: "Crea una lista con 3 entità diverse e usa un ciclo for per stampare il nome e la posizione di ciascuna.",
+      sol: `entita = [Entita(<span class="str">"Aldo"</span>, <span class="num">0</span>, <span class="num">0</span>), Entita(<span class="str">"Goblin"</span>, <span class="num">5</span>, <span class="num">2</span>), Entita(<span class="str">"Cassa"</span>, <span class="num">1</span>, <span class="num">1</span>)]\n<span class="kw">for</span> e <span class="kw">in</span> entita:\n    <span class="fn">print</span>(f<span class="str">"{e.nome} è a ({e.x}, {e.y})"</span>)` }
+  ]
+},
+{
+  title: "Sistema di inventario",
+  subtitle: "Raccogliere ed equipaggiare oggetti",
+  level: 3,
+  sections: [
+    { h: "Rappresentare gli oggetti", p: "Conviene rappresentare ogni oggetto come un dizionario o una piccola classe con proprietà come nome, tipo ed effetto.",
+      code: `<span class="kw">class</span> Oggetto:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, tipo, valore):\n        self.nome = nome\n        self.tipo = tipo      <span class="comment"># "arma", "pozione", ecc.</span>\n        self.valore = valore  <span class="comment"># danno o cura</span>` },
+    { h: "L'inventario del giocatore", p: "L'inventario è semplicemente una lista di oggetti, con metodi per aggiungere, rimuovere e usare.",
+      code: `<span class="kw">class</span> Giocatore:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome):\n        self.nome = nome\n        self.vita = <span class="num">100</span>\n        self.inventario = []\n\n    <span class="kw">def</span> <span class="fn">raccogli</span>(self, oggetto):\n        self.inventario.append(oggetto)\n        <span class="fn">print</span>(f<span class="str">"Hai raccolto: {oggetto.nome}"</span>)\n\n    <span class="kw">def</span> <span class="fn">usa</span>(self, nome_oggetto):\n        <span class="kw">for</span> o <span class="kw">in</span> self.inventario:\n            <span class="kw">if</span> o.nome == nome_oggetto <span class="kw">and</span> o.tipo == <span class="str">"pozione"</span>:\n                self.vita += o.valore\n                self.inventario.remove(o)\n                <span class="fn">print</span>(f<span class="str">"Hai usato {o.nome}, vita ora: {self.vita}"</span>)\n                <span class="kw">return</span>\n        <span class="fn">print</span>(<span class="str">"Oggetto non trovato o non usabile"</span>)` },
+    { h: "Mostrare l'inventario", p: "Un metodo dedicato rende leggibile lo stato dell'inventario in qualsiasi momento.",
+      code: `<span class="kw">def</span> <span class="fn">mostra_inventario</span>(self):\n    <span class="kw">if</span> <span class="kw">not</span> self.inventario:\n        <span class="fn">print</span>(<span class="str">"Inventario vuoto"</span>)\n    <span class="kw">for</span> o <span class="kw">in</span> self.inventario:\n        <span class="fn">print</span>(f<span class="str">"- {o.nome} ({o.tipo})"</span>)` }
+  ],
+  exercises: [
+    { q: "Crea una classe <code class='inline'>Oggetto</code> con <code class='inline'>nome</code> e <code class='inline'>tipo</code>, crea 2 oggetti e aggiungili a una lista <code class='inline'>inventario</code>.",
+      sol: `<span class="kw">class</span> Oggetto:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, tipo):\n        self.nome = nome\n        self.tipo = tipo\n\ninventario = []\ninventario.append(Oggetto(<span class="str">"Spada"</span>, <span class="str">"arma"</span>))\ninventario.append(Oggetto(<span class="str">"Pozione"</span>, <span class="str">"cura"</span>))` },
+    { q: "Scrivi una funzione <code class='inline'>conta_per_tipo(inventario, tipo)</code> che conta quanti oggetti di un certo tipo sono nell'inventario.",
+      sol: `<span class="kw">def</span> <span class="fn">conta_per_tipo</span>(inventario, tipo):\n    <span class="kw">return</span> <span class="fn">len</span>([o <span class="kw">for</span> o <span class="kw">in</span> inventario <span class="kw">if</span> o.tipo == tipo])` }
+  ]
+},
+{
+  title: "Macchina a stati",
+  subtitle: "Idle, Combattimento, Game Over",
+  level: 3,
+  sections: [
+    { h: "Perché una macchina a stati", p: "Una macchina a stati gestisce comportamenti diversi in base allo \"stato\" attuale di un'entità — esattamente il pattern che userai per animazioni e IA nemici in Godot (es. AnimationTree, State Machine nodes)." },
+    { h: "Rappresentare gli stati", p: "Gli stati si possono rappresentare come semplici stringhe, e la logica decide cosa fare in base allo stato attuale.",
+      code: `<span class="kw">class</span> Nemico:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome):\n        self.nome = nome\n        self.stato = <span class="str">"idle"</span>\n\n    <span class="kw">def</span> <span class="fn">aggiorna</span>(self):\n        <span class="kw">if</span> self.stato == <span class="str">"idle"</span>:\n            <span class="fn">print</span>(f<span class="str">"{self.nome} sta vagando..."</span>)\n        <span class="kw">elif</span> self.stato == <span class="str">"combattimento"</span>:\n            <span class="fn">print</span>(f<span class="str">"{self.nome} attacca!"</span>)\n        <span class="kw">elif</span> self.stato == <span class="str">"game_over"</span>:\n            <span class="fn">print</span>(f<span class="str">"{self.nome} è stato sconfitto"</span>)` },
+    { h: "Transizioni tra stati", p: "Un metodo dedicato cambia lo stato solo se la transizione ha senso, evitando stati incoerenti.",
+      code: `<span class="kw">def</span> <span class="fn">cambia_stato</span>(self, nuovo_stato):\n    transizioni_valide = {\n        <span class="str">"idle"</span>: [<span class="str">"combattimento"</span>],\n        <span class="str">"combattimento"</span>: [<span class="str">"idle"</span>, <span class="str">"game_over"</span>],\n        <span class="str">"game_over"</span>: []\n    }\n    <span class="kw">if</span> nuovo_stato <span class="kw">in</span> transizioni_valide[self.stato]:\n        self.stato = nuovo_stato\n        <span class="fn">print</span>(f<span class="str">"Stato cambiato in: {nuovo_stato}"</span>)\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Transizione non valida"</span>)` }
+  ],
+  exercises: [
+    { q: "Crea una classe <code class='inline'>Porta</code> con stato iniziale <code class='inline'>\"chiusa\"</code> e un metodo <code class='inline'>apri(self)</code> che cambia lo stato in <code class='inline'>\"aperta\"</code> solo se era <code class='inline'>\"chiusa\"</code>.",
+      sol: `<span class="kw">class</span> Porta:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self):\n        self.stato = <span class="str">"chiusa"</span>\n\n    <span class="kw">def</span> <span class="fn">apri</span>(self):\n        <span class="kw">if</span> self.stato == <span class="str">"chiusa"</span>:\n            self.stato = <span class="str">"aperta"</span>\n            <span class="fn">print</span>(<span class="str">"La porta si apre"</span>)\n        <span class="kw">else</span>:\n            <span class="fn">print</span>(<span class="str">"La porta è già aperta"</span>)` },
+    { q: "Aggiungi alla classe <code class='inline'>Nemico</code> vista sopra un metodo <code class='inline'>aggiorna(self)</code> che, se lo stato è <code class='inline'>\"game_over\"</code>, stampa anche \"Rimuovere dalla scena\".",
+      sol: `<span class="kw">def</span> <span class="fn">aggiorna</span>(self):\n    <span class="kw">if</span> self.stato == <span class="str">"game_over"</span>:\n        <span class="fn">print</span>(f<span class="str">"{self.nome} è stato sconfitto"</span>)\n        <span class="fn">print</span>(<span class="str">"Rimuovere dalla scena"</span>)` }
+  ]
+},
+{
+  title: "Generazione procedurale di mappe",
+  subtitle: "Stanze collegate e variazione casuale",
+  level: 3,
+  sections: [
+    { h: "Rappresentare una mappa a stanze", p: "Una mappa testuale può essere un dizionario dove ogni stanza ha una descrizione e collegamenti ad altre stanze tramite direzioni.",
+      code: `mappa = {\n    <span class="str">"ingresso"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Un corridoio buio"</span>, <span class="str">"nord"</span>: <span class="str">"sala"</span>},\n    <span class="str">"sala"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Una sala con un baule"</span>, <span class="str">"sud"</span>: <span class="str">"ingresso"</span>, <span class="str">"est"</span>: <span class="str">"tesoro"</span>},\n    <span class="str">"tesoro"</span>: {<span class="str">"descrizione"</span>: <span class="str">"La sala del tesoro!"</span>, <span class="str">"ovest"</span>: <span class="str">"sala"</span>}\n}` },
+    { h: "Variazione casuale nelle stanze", p: "<code class='inline'>random.choice()</code> permette di assegnare elementi casuali a ogni stanza, come nemici o tesori, rendendo ogni partita diversa.",
+      code: `<span class="kw">import</span> random\n\nnemici_possibili = [<span class="str">"Goblin"</span>, <span class="str">"Scheletro"</span>, <span class="str">"Nessuno"</span>]\n\n<span class="kw">for</span> nome_stanza <span class="kw">in</span> mappa:\n    mappa[nome_stanza][<span class="str">"nemico"</span>] = random.choice(nemici_possibili)` },
+    { h: "Navigare la mappa", p: "Un ciclo principale legge l'input del giocatore e si muove tra le stanze seguendo i collegamenti definiti.",
+      code: `stanza_attuale = <span class="str">"ingresso"</span>\n\n<span class="kw">while</span> <span class="kw">True</span>:\n    info = mappa[stanza_attuale]\n    <span class="fn">print</span>(info[<span class="str">"descrizione"</span>])\n    direzione = <span class="fn">input</span>(<span class="str">"Dove vuoi andare? "</span>).lower()\n    <span class="kw">if</span> direzione <span class="kw">in</span> info:\n        stanza_attuale = info[direzione]\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Non puoi andare in quella direzione"</span>)` }
+  ],
+  exercises: [
+    { q: "Crea un dizionario <code class='inline'>mappa</code> con almeno 2 stanze collegate da una direzione a tua scelta, ognuna con una descrizione.",
+      sol: `mappa = {\n    <span class="str">"cortile"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Un cortile pieno d'erba"</span>, <span class="str">"nord"</span>: <span class="str">"torre"</span>},\n    <span class="str">"torre"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Una torre alta e stretta"</span>, <span class="str">"sud"</span>: <span class="str">"cortile"</span>}\n}` },
+    { q: "Usando <code class='inline'>random.choice()</code>, assegna a ogni stanza della mappa sopra un \"tesoro\" scelto a caso tra [\"oro\", \"gemma\", \"niente\"].",
+      sol: `<span class="kw">import</span> random\n\ntesori = [<span class="str">"oro"</span>, <span class="str">"gemma"</span>, <span class="str">"niente"</span>]\n<span class="kw">for</span> nome_stanza <span class="kw">in</span> mappa:\n    mappa[nome_stanza][<span class="str">"tesoro"</span>] = random.choice(tesori)` }
+  ]
+},
+{
+  title: "Progetto finale: Mini-RPG testuale",
+  subtitle: "Entità, inventario, stati e mappa insieme",
+  level: 3,
+  sections: [
+    { h: "L'obiettivo", p: "Questo è il progetto più completo del sito: un piccolo RPG navigabile da terminale che unisce tutto il Livello Game Dev — entità, inventario, macchina a stati per i nemici, e una mappa con stanze collegate." },
+    { h: "Le classi principali", p: "Definiamo un giocatore con inventario e vita, e nemici con uno stato che determina il loro comportamento.",
+      code: `<span class="kw">import</span> random\n\n<span class="kw">class</span> Giocatore:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome):\n        self.nome = nome\n        self.vita = <span class="num">100</span>\n        self.inventario = []\n\n<span class="kw">class</span> Nemico:\n    <span class="kw">def</span> <span class="fn">__init__</span>(self, nome, vita):\n        self.nome = nome\n        self.vita = vita\n        self.stato = <span class="str">"idle"</span>\n\n    <span class="kw">def</span> <span class="fn">e_vivo</span>(self):\n        <span class="kw">return</span> self.vita > <span class="num">0</span>` },
+    { h: "La mappa con eventi", p: "Ogni stanza può contenere un nemico generato casualmente, gestito tramite la macchina a stati vista nel modulo precedente.",
+      code: `mappa = {\n    <span class="str">"ingresso"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Un corridoio buio"</span>, <span class="str">"nord"</span>: <span class="str">"sala"</span>, <span class="str">"nemico"</span>: <span class="kw">None</span>},\n    <span class="str">"sala"</span>: {<span class="str">"descrizione"</span>: <span class="str">"Una sala con un Goblin"</span>, <span class="str">"sud"</span>: <span class="str">"ingresso"</span>, <span class="str">"nemico"</span>: Nemico(<span class="str">"Goblin"</span>, <span class="num">30</span>)}\n}` },
+    { h: "Il ciclo di gioco completo", p: "Il ciclo principale combina navigazione, combattimento e gestione dell'inventario in un'unica esperienza giocabile.",
+      code: `giocatore = Giocatore(<span class="str">"Aldo"</span>)\nstanza_attuale = <span class="str">"ingresso"</span>\n\n<span class="kw">while</span> giocatore.vita > <span class="num">0</span>:\n    info = mappa[stanza_attuale]\n    <span class="fn">print</span>(info[<span class="str">"descrizione"</span>])\n\n    nemico = info[<span class="str">"nemico"</span>]\n    <span class="kw">if</span> nemico <span class="kw">and</span> nemico.e_vivo():\n        danno = random.randint(<span class="num">5</span>, <span class="num">15</span>)\n        nemico.vita -= danno\n        giocatore.vita -= random.randint(<span class="num">3</span>, <span class="num">10</span>)\n        <span class="fn">print</span>(f<span class="str">"Combatti con {nemico.nome}! Vita giocatore: {giocatore.vita}"</span>)\n        <span class="kw">continue</span>\n\n    direzione = <span class="fn">input</span>(<span class="str">"Dove vuoi andare? "</span>).lower()\n    <span class="kw">if</span> direzione <span class="kw">in</span> info:\n        stanza_attuale = info[direzione]\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Non puoi andare lì"</span>)` }
+  ],
+  exercises: [
+    { q: "Aggiungi alla classe <code class='inline'>Giocatore</code> un metodo <code class='inline'>raccogli(self, oggetto)</code> che aggiunge un oggetto all'inventario e stampa una conferma.",
+      sol: `<span class="kw">def</span> <span class="fn">raccogli</span>(self, oggetto):\n    self.inventario.append(oggetto)\n    <span class="fn">print</span>(f<span class="str">"Hai raccolto: {oggetto}"</span>)` },
+    { q: "Modifica il ciclo di gioco per terminare con \"Hai vinto!\" se tutti i nemici nella mappa sono stati sconfitti (usa una list comprehension per controllarlo).",
+      sol: `nemici_vivi = [s[<span class="str">"nemico"</span>] <span class="kw">for</span> s <span class="kw">in</span> mappa.values() <span class="kw">if</span> s[<span class="str">"nemico"</span>] <span class="kw">and</span> s[<span class="str">"nemico"</span>].e_vivo()]\n<span class="kw">if</span> <span class="kw">not</span> nemici_vivi:\n    <span class="fn">print</span>(<span class="str">"Hai vinto!"</span>)\n    <span class="kw">break</span>` }
+  ]
+}
+];
+
+let completed = new Array(lessons.length).fill(false);
+let currentLesson = 0;
+let level2JustUnlocked = false;
+let level3JustUnlocked = false;
+
+// --- Salvataggio persistente (funziona solo fuori da Claude.ai, es. file HTML locale) ---
+// All'interno di Claude.ai, localStorage non è supportato e queste righe vengono ignorate
+// silenziosamente grazie al blocco try/catch. Se apri questo file in un browser normale
+// (fuori da Claude), il progresso viene salvato e ricaricato automaticamente.
+const STORAGE_KEY = 'python_da_zero_progresso';
+
+function salvaProgresso() {
+  try {
+    const dati = { completed: completed, currentLesson: currentLesson };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dati));
+  } catch (e) {
+    // localStorage non disponibile in questo ambiente (es. dentro Claude.ai) - si ignora
+  }
+}
+
+function caricaProgresso() {
+  try {
+    const salvato = localStorage.getItem(STORAGE_KEY);
+    if (salvato) {
+      const dati = JSON.parse(salvato);
+      if (Array.isArray(dati.completed) && dati.completed.length === lessons.length) {
+        completed = dati.completed;
+      }
+      if (typeof dati.currentLesson === 'number' && dati.currentLesson >= 0 && dati.currentLesson < lessons.length) {
+        currentLesson = dati.currentLesson;
+      }
+    }
+  } catch (e) {
+    // localStorage non disponibile in questo ambiente (es. dentro Claude.ai) - si ignora
+  }
+}
+
+// A level is "fully done" only if EVERY lesson with that level number is completed.
+function allOfLevelDone(levelNum) {
+  const lessonsInLevel = lessons.filter(l => l.level === levelNum);
+  if (lessonsInLevel.length === 0) return false;
+  return lessons.every((l, i) => l.level !== levelNum || completed[i] === true);
+}
+
+// Level 1 is always unlocked. Level 2 requires level 1 fully done.
+// Level 3 requires BOTH level 1 AND level 2 fully done.
+function isLevelUnlocked(levelNum) {
+  if (levelNum === 1) return true;
+  if (levelNum === 2) return allOfLevelDone(1);
+  if (levelNum === 3) return allOfLevelDone(1) === true && allOfLevelDone(2) === true;
+  return false;
+}
+
+function renderSidebar() {
+  const list = document.getElementById('moduleList');
+  list.innerHTML = '';
+  const counts = { 1: 0, 2: 0, 3: 0 };
+  lessons.forEach(l => counts[l.level]++);
+  const seqInLevel = { 1: 0, 2: 0, 3: 0 };
+
+  const levelLabels = {
+    2: "Livello 2 · Verso il game dev",
+    3: "Livello Game Dev"
+  };
+
+  lessons.forEach((l, i) => {
+    if ((l.level === 2 || l.level === 3) && (i === 0 || lessons[i - 1].level !== l.level)) {
+      const unlocked = isLevelUnlocked(l.level);
+      const divider = document.createElement('div');
+      divider.className = 'level-divider';
+      divider.innerHTML = unlocked
+        ? `<span>${levelLabels[l.level]}</span>`
+        : `<span class="lock-icon">🔒</span><span>${levelLabels[l.level]} (completa il livello precedente)</span>`;
+      list.appendChild(divider);
+    }
+    seqInLevel[l.level]++;
+    const locked = !isLevelUnlocked(l.level);
+    const item = document.createElement('div');
+    item.className = 'module-item' + (i === currentLesson ? ' active' : '') + (locked ? ' locked' : '');
+    if (!locked) {
+      item.onclick = () => { currentLesson = i; salvaProgresso(); renderAll(); };
+    }
+    item.innerHTML = `
+      <span class="module-num">${seqInLevel[l.level]}</span>
+      <span class="module-check ${completed[i] ? 'done' : ''}">${locked ? '🔒' : (completed[i] ? '✓' : '')}</span>
+      <span>${l.title}</span>
+    `;
+    list.appendChild(item);
+  });
+
+  const doneCount = completed.filter(Boolean).length;
+  let label;
+  if (!isLevelUnlocked(2)) {
+    const done1 = completed.filter((c, i) => c && lessons[i].level === 1).length;
+    label = `${done1} / ${counts[1]} completate (base)`;
+  } else if (!isLevelUnlocked(3)) {
+    const done12 = completed.filter((c, i) => c && (lessons[i].level === 1 || lessons[i].level === 2)).length;
+    label = `${done12} / ${counts[1] + counts[2]} completate`;
+  } else {
+    label = `${doneCount} / ${lessons.length} completate`;
+  }
+  document.getElementById('progressFill').style.width = (doneCount / lessons.length * 100) + '%';
+  document.getElementById('progressLabel').textContent = label;
+}
+
+function renderMain() {
+  // Safety net: if for any reason currentLesson points to a locked lesson, snap back.
+  if (!isLevelUnlocked(lessons[currentLesson].level)) {
+    currentLesson = 0;
+  }
+
+  const lesson = lessons[currentLesson];
+  const main = document.getElementById('mainContent');
+
+  let unlockBanner = '';
+  if (level2JustUnlocked && lesson.level === 1) {
+    unlockBanner = `
+      <div class="unlock-banner">
+        <h2>🎉 Hai completato tutti i moduli base!</h2>
+        <p>Il Livello 2 — orientato al game dev — si è appena sbloccato nella sidebar.</p>
+        <button class="nav-btn complete-btn" onclick="goToLevel(2)">Vai al Livello 2 &rarr;</button>
+      </div>
+    `;
+  }
+  if (level3JustUnlocked && lesson.level === 2) {
+    unlockBanner = `
+      <div class="unlock-banner">
+        <h2>🚀 Livello 2 completato!</h2>
+        <p>Il Livello Game Dev si è appena sbloccato: progetti più ricchi ti aspettano.</p>
+        <button class="nav-btn complete-btn" onclick="goToLevel(3)">Vai al Livello Game Dev &rarr;</button>
+      </div>
+    `;
+  }
+
+  let sectionsHtml = lesson.sections.map(s => `
+    <div class="section">
+      <h2>${s.h}</h2>
+      <p>${s.p}</p>
+      ${s.code ? `<pre class="codeblock">${s.code}</pre>` : ''}
+    </div>
+  `).join('');
+
+  let exercisesHtml = `<div class="section"><h2>Esercizi</h2>` + lesson.exercises.map((ex, idx) => `
+    <div class="exercise-box">
+      <div class="ex-label">Esercizio ${idx + 1}</div>
+      <p>${ex.q}</p>
+      <textarea class="code-input" id="input-${idx}" placeholder="Scrivi qui il tuo codice..." spellcheck="false"></textarea>
+      <div class="ex-actions">
+        <button class="reveal-btn" onclick="toggleSolution(${idx})">Confronta con la soluzione</button>
+      </div>
+      <div class="solution" id="sol-${idx}">
+        <div class="compare-label">Il tuo codice vs soluzione</div>
+        <div class="compare-grid">
+          <pre class="codeblock" id="usercode-${idx}"></pre>
+          <pre class="codeblock">${ex.sol}</pre>
+        </div>
+      </div>
+    </div>
+  `).join('') + `</div>`;
+
+  const nextLesson = lessons[currentLesson + 1];
+  const nextLocked = nextLesson ? !isLevelUnlocked(nextLesson.level) : true;
+
+  main.innerHTML = `
+    <div class="lesson-title">${lesson.title}</div>
+    <div class="lesson-subtitle">Modulo ${currentLesson + 1} di ${lessons.length} · ${lesson.subtitle}</div>
+    ${unlockBanner}
+    ${sectionsHtml}
+    ${exercisesHtml}
+    <div class="nav-buttons">
+      <button class="nav-btn" id="prevBtn" ${currentLesson === 0 ? 'disabled' : ''} onclick="goPrev()">&larr; Precedente</button>
+      <button class="nav-btn complete-btn ${completed[currentLesson] ? 'done-state' : ''}" onclick="toggleComplete()">
+        ${completed[currentLesson] ? 'Completata ✓' : 'Segna come completata'}
+      </button>
+      <button class="nav-btn" id="nextBtn" ${!nextLesson || nextLocked ? 'disabled' : ''} onclick="goNext()">Successiva &rarr;</button>
+    </div>
+  `;
+}
+
+function goToLevel(levelNum) {
+  if (!isLevelUnlocked(levelNum)) return;
+  const firstInLevel = lessons.findIndex(l => l.level === levelNum);
+  if (firstInLevel !== -1) {
+    currentLesson = firstInLevel;
+    level2JustUnlocked = false;
+    level3JustUnlocked = false;
+    salvaProgresso();
+    renderAll();
+  }
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function toggleSolution(idx) {
+  const el = document.getElementById('sol-' + idx);
+  const isShown = el.classList.contains('shown');
+  if (!isShown) {
+    const userText = document.getElementById('input-' + idx).value;
+    const userCodeEl = document.getElementById('usercode-' + idx);
+    userCodeEl.innerHTML = userText.trim()
+      ? escapeHtml(userText)
+      : '<span class="comment">Non hai scritto nulla...</span>';
+  }
+  el.classList.toggle('shown');
+}
+
+function toggleComplete() {
+  const wasLevel1Done = allOfLevelDone(1);
+  const wasLevel2Done = allOfLevelDone(2);
+  completed[currentLesson] = !completed[currentLesson];
+  const isLevel1DoneNow = allOfLevelDone(1);
+  const isLevel2DoneNow = allOfLevelDone(2);
+  if (!wasLevel1Done && isLevel1DoneNow) {
+    level2JustUnlocked = true;
+  }
+  if (!wasLevel2Done && isLevel2DoneNow && isLevel1DoneNow) {
+    level3JustUnlocked = true;
+  }
+  salvaProgresso();
+  renderAll();
+}
+
+function goPrev() {
+  if (currentLesson > 0) { currentLesson--; salvaProgresso(); renderAll(); }
+}
+function goNext() {
+  const nextLesson = lessons[currentLesson + 1];
+  if (nextLesson && isLevelUnlocked(nextLesson.level)) {
+    currentLesson++;
+    salvaProgresso();
+    renderAll();
+  }
+}
+
+function renderAll() {
+  renderSidebar();
+  renderMain();
+  document.getElementById('mainContent').scrollTop = 0;
+}
+
+caricaProgresso();
+renderAll();
+</script>
+</body>
+</html>
