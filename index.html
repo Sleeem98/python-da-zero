@@ -303,7 +303,7 @@
   <div class="main" id="mainContent"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // --- Configurazione Supabase ---
 // Sostituisci questi due valori con quelli del TUO progetto Supabase
@@ -312,13 +312,18 @@ const SUPABASE_URL = "https://lzqzlzcpmbmtjyolumga.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6cXpsemNwbWJtdGp5b2x1bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzQ1NDUsImV4cCI6MjA5Nzk1MDU0NX0.4jG0go7XAJPpdjs4aUuMZs49ta7NV3g-PS22UMPDo8Q";
 
 let supabaseClient = null;
-try {
-  if (window.supabase && SUPABASE_URL.startsWith("https://")) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function inizializzaSupabaseClient() {
+  try {
+    if (window.supabase && typeof window.supabase.createClient === 'function' && SUPABASE_URL.startsWith("https://")) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+      console.warn('Libreria Supabase non ancora disponibile su window.supabase');
+    }
+  } catch (e) {
+    console.warn("Supabase non disponibile, uso solo salvataggio locale.", e);
   }
-} catch (e) {
-  console.warn("Supabase non disponibile, uso solo salvataggio locale.", e);
 }
+inizializzaSupabaseClient();
 
 const lessons = [
 {
