@@ -294,12 +294,32 @@
       <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       <div class="progress-label" id="progressLabel">0 / 10 completate</div>
     </div>
+    <div id="syncStatus" style="padding:0 1.25rem 0.5rem; font-size:11px; color:var(--text-dim);"></div>
+    <div style="padding:0 1.25rem 0.75rem;">
+      <button class="reveal-btn" style="width:100%;" onclick="impostaCodicePersonale()">🔄 Sincronizza dispositivi</button>
+    </div>
     <div id="moduleList"></div>
   </div>
   <div class="main" id="mainContent"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.7/supabase.min.js"></script>
 <script>
+// --- Configurazione Supabase ---
+// Sostituisci questi due valori con quelli del TUO progetto Supabase
+// (Settings -> API nella dashboard di Supabase)
+const SUPABASE_URL = "https://lzqzlzcpmbmtjyolumga.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6cXpsemNwbWJtdGp5b2x1bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzQ1NDUsImV4cCI6MjA5Nzk1MDU0NX0.4jG0go7XAJPpdjs4aUuMZs49ta7NV3g-PS22UMPDo8Q";
+
+let supabaseClient = null;
+try {
+  if (window.supabase && SUPABASE_URL.startsWith("https://")) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) {
+  console.warn("Supabase non disponibile, uso solo salvataggio locale.", e);
+}
+
 const lessons = [
 {
   title: "Introduzione a Python",
@@ -682,22 +702,40 @@ let currentLesson = 0;
 let level2JustUnlocked = false;
 let level3JustUnlocked = false;
 
-// --- Salvataggio persistente (funziona solo fuori da Claude.ai, es. file HTML locale) ---
-// All'interno di Claude.ai, localStorage non è supportato e queste righe vengono ignorate
-// silenziosamente grazie al blocco try/catch. Se apri questo file in un browser normale
-// (fuori da Claude), il progresso viene salvato e ricaricato automaticamente.
+// --- Salvataggio: localStorage (cache locale veloce) + Supabase (condiviso tra dispositivi) ---
 const STORAGE_KEY = 'python_da_zero_progresso';
+const CODICE_KEY = 'python_da_zero_codice_personale';
+let codicePersonale = null;
+let salvataggioInCorso = false;
 
-function salvaProgresso() {
+function getCodicePersonale() {
   try {
-    const dati = { completed: completed, currentLesson: currentLesson };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dati));
+    return localStorage.getItem(CODICE_KEY);
   } catch (e) {
-    // localStorage non disponibile in questo ambiente (es. dentro Claude.ai) - si ignora
+    return null;
   }
 }
 
-function caricaProgresso() {
+function setCodicePersonale(codice) {
+  codicePersonale = codice;
+  try {
+    localStorage.setItem(CODICE_KEY, codice);
+  } catch (e) { /* ignorato */ }
+}
+
+function aggiornaStatoSync(testo) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.textContent = testo;
+}
+
+function salvaLocale() {
+  try {
+    const dati = { completed: completed, currentLesson: currentLesson };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dati));
+  } catch (e) { /* localStorage non disponibile (es. dentro Claude.ai) */ }
+}
+
+function caricaLocale() {
   try {
     const salvato = localStorage.getItem(STORAGE_KEY);
     if (salvato) {
@@ -709,8 +747,89 @@ function caricaProgresso() {
         currentLesson = dati.currentLesson;
       }
     }
+  } catch (e) { /* localStorage non disponibile (es. dentro Claude.ai) */ }
+}
+
+async function salvaSuSupabase() {
+  if (!supabaseClient || !codicePersonale) return;
+  salvataggioInCorso = true;
+  aggiornaStatoSync('Salvataggio in corso...');
+  try {
+    const { error } = await supabaseClient
+      .from('progresso')
+      .upsert({
+        id: codicePersonale,
+        completed: completed,
+        current_lesson: currentLesson,
+        updated_at: new Date().toISOString()
+      });
+    if (error) throw error;
+    aggiornaStatoSync('✓ Sincronizzato');
   } catch (e) {
-    // localStorage non disponibile in questo ambiente (es. dentro Claude.ai) - si ignora
+    console.error('Errore salvataggio Supabase:', e);
+    aggiornaStatoSync('⚠ Salvato solo localmente');
+  }
+  salvataggioInCorso = false;
+}
+
+async function caricaDaSupabase(codice) {
+  if (!supabaseClient) return false;
+  aggiornaStatoSync('Caricamento...');
+  try {
+    const { data, error } = await supabaseClient
+      .from('progresso')
+      .select('completed, current_lesson')
+      .eq('id', codice)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      if (Array.isArray(data.completed) && data.completed.length === lessons.length) {
+        completed = data.completed;
+      }
+      if (typeof data.current_lesson === 'number' && data.current_lesson >= 0 && data.current_lesson < lessons.length) {
+        currentLesson = data.current_lesson;
+      }
+      aggiornaStatoSync('✓ Sincronizzato');
+      return true;
+    }
+    aggiornaStatoSync('✓ Nuovo codice creato');
+    return false;
+  } catch (e) {
+    console.error('Errore caricamento Supabase:', e);
+    aggiornaStatoSync('⚠ Modalità solo locale');
+    return false;
+  }
+}
+
+function salvaProgresso() {
+  salvaLocale();
+  salvaSuSupabase();
+}
+
+async function inizializzaSync() {
+  const codiceSalvato = getCodicePersonale();
+  if (codiceSalvato) {
+    codicePersonale = codiceSalvato;
+    if (supabaseClient) {
+      await caricaDaSupabase(codiceSalvato);
+    }
+  } else {
+    caricaLocale();
+    if (supabaseClient) {
+      aggiornaStatoSync('Salvataggio solo locale');
+    }
+  }
+}
+
+function impostaCodicePersonale() {
+  const attuale = codicePersonale || '';
+  const nuovo = prompt(
+    'Inserisci un codice personale (a tua scelta) per sincronizzare il progresso tra i tuoi dispositivi.\n\nUsa lo stesso codice su ogni dispositivo per ritrovare lo stesso progresso.',
+    attuale
+  );
+  if (nuovo && nuovo.trim()) {
+    setCodicePersonale(nuovo.trim());
+    caricaDaSupabase(nuovo.trim()).then(() => renderAll());
   }
 }
 
@@ -922,8 +1041,10 @@ function renderAll() {
   document.getElementById('mainContent').scrollTop = 0;
 }
 
-caricaProgresso();
-renderAll();
+(async function avvia() {
+  await inizializzaSync();
+  renderAll();
+})();
 </script>
 </body>
 </html>
